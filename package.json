@@ -1,0 +1,19 @@
+{
+  "name": "slack-link",
+  "version": "1.0.0",
+  "description": "Allows the linking of RPIA's slack usernames with its websites database",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Logan Ramos",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "dotenv": "^6.2.0",
+    "express": "^4.16.4",
+    "qs": "^6.6.0",
+    "request": "^2.88.0",
+    "validate-slack-request": "^0.1.1"
+  }
+}
