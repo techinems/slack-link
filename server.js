@@ -55,35 +55,49 @@ function slackSlashCommands(req, res){
     var command = req_body.command;
     // Link user command
     if(command == "/linkuser"){
-        var text = req_body.text
-        text = text.split(" ");
-        var user = text[0];
-        // Means it's most likely not a user
-        if(user.indexOf("<") != 0){
-            res.send("The first paramter must be a user!");
-            return;
-        }
-
-        user = user.substring(0,user.indexOf("|"));
-        user += ">";
-        var web_id = text[1];
-        if(isNaN(web_id)){
-            res.send("The second paramater must be a whole number!");
-            return;
-        }
-
-        // Sends the post request to rpiambulance.com 
-        request.post({
-            url:'https://rpiambulance.com/slack-link.php', 
-            form: {slack_id: user, member_id: web_id}
-        }, function(err,response,body){
-            if (!err && response.statusCode == 200) {
-                return res.send(body);
+        var slack_userinfo_url = "https://slack.com/api/users.info?token=" + slackAccessToken + "&user=" + req_body.user_id;
+        request.get(slack_userinfo_url, function(error, resp, bod){
+            if (!error && resp.statusCode == 200) {
+                bod = JSON.parse(bod);
+                // If the user isn't an admin don't go any further
+                if(!(bod.user.is_admin)){
+                    return res.send("This command can only be used by an admin!");
+                }else{
+                    var text = req_body.text
+                    text = text.split(" ");
+                    var user = text[0];
+                    // Means it's most likely not a user
+                    if(user.indexOf("<") != 0){
+                        res.send("The first paramter must be a user!");
+                        return;
+                    }
+            
+                    user = user.substring(0,user.indexOf("|"));
+                    user += ">";
+                    var web_id = text[1];
+                    if(isNaN(web_id)){
+                        res.send("The second paramater must be a whole number!");
+                        return;
+                    }
+            
+                    // Sends the post request to rpiambulance.com 
+                    request.post({
+                        url:'https://rpiambulance.com/slack-link.php', 
+                        form: {slack_id: user, member_id: web_id}
+                    }, function(err,response,body){
+                        if (!err && response.statusCode == 200) {
+                            return res.send(body);
+                        }else{
+                            var message = "Oops! Something happened with that server request, please try again later.";
+                            return res.send(message);
+                        }
+                        
+                    });
+                }
             }else{
                 var message = "Oops! Something happened with that server request, please try again later.";
                 return res.send(message);
             }
-            
         });
     }else{
         // This gets hit if slack sends a post to this app but we didn't program for that command
