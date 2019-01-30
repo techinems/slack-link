@@ -45,9 +45,9 @@ app.use('/slack/slack-link/commands', function(req,res,next){
 
 app.post('/slack/slack-link/commands', slackSlashCommands);
 
-// Initializes server on PORT 3000
-app.listen(3000,function(){
-    console.log("Started on PORT 3000");
+// Initializes server on PORT 4000
+app.listen(4000,function(){
+    console.log("Started on PORT 4000");
 })
 
 function slackSlashCommands(req, res){
@@ -58,6 +58,8 @@ function slackSlashCommands(req, res){
     }else if(command == "/checklink"){
         // I felt the code was getting a little cluttered so I moved the command into a function
         checkUserLink(req,res);
+    }else if(command == "/memberinfo"){
+        memberInfo(req,res);
     }else{
         // This gets hit if slack sends a post to this app but we didn't program for that command
         console.log("Command not configured!");
@@ -145,6 +147,42 @@ function linkUser(req,res){
         }else{
             var message = "Oops! Something happened with that server request, please try again later.";
             return res.send(message);
+        }
+    });
+}
+
+function memberInfo(req,res){
+    var req_body = req.body;
+    // The paramaters after the command
+    var text = req_body.text;
+    // Puts it in the format that database has
+    var user = "<@" + req_body.user_id + ">";
+    var rpia_query_url = "https://rpiambulance.com/slack-link.php?type=info&slack_id=";
+    // If they gave us no paramaters just return themselves
+    if(text.length == 0){
+        // Encodes the userID of who initialized the command to be sent
+        rpia_query_url += encodeURIComponent(user);
+    }else{
+        text = text.split(" ");
+        user = text[0];
+        // Means it's most likely not a user
+        if(user.indexOf("<") != 0){
+            res.send("The first paramter must be a user!");
+            return;
+        }
+        // We chop off the username as slack is deprecating this
+        user = user.substring(0,user.indexOf("|"));
+        user += ">";
+        rpia_query_url += encodeURI(user);
+    }
+    // Here's where we make the actual request to RPIA servers
+    request.get(rpia_query_url, function(error,resp,body){
+        if(!error && resp.statusCode == 200){
+            // Whatever the website returns is the message we will use.
+            return res.send(body);
+        }else{
+            console.log(rpia_query_url);
+            return res.send("Oops! Something went wrong with the server request to RPIA!");
         }
     });
 }
