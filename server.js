@@ -81,7 +81,6 @@ function checkUserLink(req, res){
     }else{
         text = text.split(" ");
         user = text[0];
-        console.log(user);
         // Means it's most likely not a user
         if(user.indexOf("<") != 0){
             res.send("The first paramter must be a user!");
