@@ -28,7 +28,7 @@ app.use('/slack/slack-link/commands', function (req, res, next) {
     const time = Math.floor(new Date().getTime() / 1000);
     // Most likely a replay attack
     if (Math.abs(time - timestamp) > 300) {
-        return res.status(400).send('Ignore this request.');
+        return res.status(200).send('Ignore this request.');
     }
     let sigBasestring = 'v0:' + timestamp + ':' + requestBody;
     let mySignature = 'v0=' +
@@ -39,7 +39,7 @@ app.use('/slack/slack-link/commands', function (req, res, next) {
     if (crypto.timingSafeEqual(Buffer.from(mySignature, 'utf8'), Buffer.from(slackSignature, 'utf8'))) {
         next();
     } else {
-        return res.status(400).send('Request verification failed');
+        return res.status(200).send('Request verification failed');
     }
 });
 
