@@ -5,7 +5,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const qs = require('qs');
 
-//If the environment letiables don't get loaded
+//If the environment variables don't get loaded
 if (env.error) {
     throw env.error
 }
