@@ -1,6 +1,6 @@
 const env = require('dotenv').config();
 const crypto = require('crypto');
-const request = require('request');
+const axios = require('axios');
 const express = require('express');
 const bodyParser = require('body-parser');
 const qs = require('qs');
@@ -50,16 +50,16 @@ app.listen(4000, function () {
     console.log("Started on PORT 4000");
 })
 
-function slackSlashCommands(req, res) {
+async function slackSlashCommands(req, res) {
     let command = req.body.command;
     // Link user command
     if (command == "/linkuser") {
-        linkUser(req, res);
+        await linkUser(req, res);
     } else if (command == "/checklink") {
         // I felt the code was getting a little cluttered so I moved the command into a function
-        checkUserLink(req, res);
+        await checkUserLink(req, res);
     } else if (command == "/memberinfo") {
-        memberInfo(req, res);
+        await memberInfo(req, res);
     } else {
         // This gets hit if slack sends a post to this app but we didn't program for that command
         console.log("Command not configured!");
@@ -67,7 +67,7 @@ function slackSlashCommands(req, res) {
     }
 }
 
-function checkUserLink(req, res) {
+async function checkUserLink(req, res) {
     let req_body = req.body;
     // The paramaters after the command
     let text = req_body.text;
@@ -92,19 +92,20 @@ function checkUserLink(req, res) {
         rpia_query_url += encodeURI(user);
     }
     // Here's where we make the actual request to RPIA servers
-    request.get(rpia_query_url, function (error, resp, body) {
-        if (!error && resp.statusCode == 200) {
-            // Whatever the website returns is the message we will use.
-            return res.send(body);
-        } else {
-            return res.send("Oops! Something went wrong with the server request to RPIA!");
+    try {
+        const response = await axios.get(rpia_query_url);
+        if (response.status === 200) {
+            return res.send(response.data);
         }
-    });
+    } catch (err) {
+        console.error(err);
+        return res.send("Oops! Something went wrong with the server request to RPIA!");
+    }
 }
 
-function linkUser(req, res) {
+async function linkUser(req, res) {
     const req_body = req.body;
-    if (!(isAdmin(req_body.user_id))) {
+    if (!(await isAdmin(req_body.user_id))) {
         return res.send("This command can only be used by an admin!");
     } else {
         let text = req_body.text
@@ -125,22 +126,23 @@ function linkUser(req, res) {
         }
 
         // Sends the post request to rpiambulance.com 
-        request.post({
-            url: 'https://rpiambulance.com/slack-link.php',
-            form: { slack_id: user, member_id: web_id, token: websiteVerificationToken }
-        }, function (err, response, body) {
-            if (!err && response.statusCode == 200) {
-                return res.send(body);
-            } else {
-                let message = "Oops! Something happened with that server request, please try again later.";
-                return res.send(message);
+        try {
+            const response = await axios.post('https://rpiambulance.com/slack-link.php', {
+                slack_id: user,
+                member_id: web_id,
+                token: websiteVerificationToken
+            });
+            if (response.status == 200) {
+                return res.send(response.data);
             }
-
-        });
+        } catch (err) {
+            console.error(err);
+            return res.send("Oops! Something happened with that server request, please try again later.");
+        }
     }
 }
 
-function memberInfo(req, res) {
+async function memberInfo(req, res) {
     const req_body = req.body;
     // The paramaters after the command
     let text = req_body.text;
@@ -165,30 +167,33 @@ function memberInfo(req, res) {
         rpia_query_url += encodeURI(user);
     }
     // Add the fact that the user is an admin so they can get more information
-    if (isAdmin(req_body.user_id)) {
-        rpia_query_url += "admin=1";
+    if (await isAdmin(req_body.user_id)) {
+        rpia_query_url += "&admin=1";
     }
     // Here's where we make the actual request to RPIA servers
-    request.get(rpia_query_url, function (error, resp, body) {
-        if (!error && resp.statusCode == 200) {
-            // Whatever the website returns is the message we will use.
-            return res.send(body);
-        } else {
-            console.log(rpia_query_url);
-            return res.send("Oops! Something went wrong with the server request to RPIA!");
+    try {
+        const response = await axios.get(rpia_query_url);
+        if (response.status == 200) {
+            return res.send(response.data);
         }
-    });
+    } catch (err) {
+        console.log(rpia_query_url);
+        console.error(err);
+        return res.send("Oops! Something went wrong with the server request to RPIA!");
+    }
 }
 
-function isAdmin(userId) {
+async function isAdmin(userId) {
     const slack_userinfo_url = "https://slack.com/api/users.info?token=" + slackAccessToken + "&user=" + userId;
-    request.get(slack_userinfo_url, function (error, resp, bod) {
-        if (!error && resp.statusCode == 200) {
-            bod = JSON.parse(bod);
-            return bod.user.is_admin
+    try {
+        const response = await axios.get(slack_userinfo_url);
+        if (response.status === 200) {
+            return response.data.user.is_admin
         } else {
-            console.error(`Bad Admin Request: ${error}`);
+            return false;
         }
+    } catch (err) {
+        console.error(`Bad Admin Request: ${err}`);
         return false;
-    });
+    }
 }
