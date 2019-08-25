@@ -10,7 +10,7 @@ if (env.error) {
     throw env.error
 }
 
-// Load in the environment letiables
+// Load in the environment variables
 const slackAccessToken = process.env.SLACK_ACCESS_TOKEN;
 const slackSigningSecret = process.env.SLACK_SIGNING_SECRET;
 const websiteVerificationToken = process.env.WEBSITE_VERIFICATION_TOKEN;
