@@ -127,11 +127,11 @@ async function linkUser(req, res) {
 
         // Sends the post request to rpiambulance.com 
         try {
-            const response = await axios.post('https://rpiambulance.com/slack-link.php', {
+            const response = await axios.post('https://rpiambulance.com/slack-link.php', qs.stringify({
                 slack_id: user,
                 member_id: web_id,
                 token: websiteVerificationToken
-            });
+            }));
             if (response.status == 200) {
                 return res.send(response.data);
             }
