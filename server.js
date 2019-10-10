@@ -1,14 +1,9 @@
-const env = require('dotenv').config();
+require('dotenv').config();
 const crypto = require('crypto');
 const axios = require('axios');
 const express = require('express');
 const bodyParser = require('body-parser');
 const qs = require('qs');
-
-//If the environment variables don't get loaded
-if (env.error) {
-    throw env.error
-}
 
 // Load in the environment variables
 const slackAccessToken = process.env.SLACK_ACCESS_TOKEN;
