@@ -9,6 +9,7 @@ const qs = require('qs');
 const slackAccessToken = process.env.SLACK_ACCESS_TOKEN;
 const slackSigningSecret = process.env.SLACK_SIGNING_SECRET;
 const websiteVerificationToken = process.env.WEBSITE_VERIFICATION_TOKEN;
+const baseUrl = process.env.BASE_URL;
 
 // Initializes express app
 const app = express();
@@ -68,7 +69,7 @@ async function checkUserLink(req, res) {
     let text = req_body.text;
     // Puts it in the format that database has
     let user = "<@" + req_body.user_id + ">";
-    let rpia_query_url = `https://rpiambulance.com/slack-link.php?token=${websiteVerificationToken}&slack_id=`;
+    let rpia_query_url = `${baseUrl}?token=${websiteVerificationToken}&slack_id=`;
     // If they gave us no paramaters just return themselves
     if (text.length == 0) {
         // Encodes the userID of who initialized the command to be sent
@@ -122,7 +123,7 @@ async function linkUser(req, res) {
 
         // Sends the post request to rpiambulance.com 
         try {
-            const response = await axios.post('https://rpiambulance.com/slack-link.php', qs.stringify({
+            const response = await axios.post(baseUrl, qs.stringify({
                 slack_id: user,
                 member_id: web_id,
                 token: websiteVerificationToken
@@ -143,7 +144,7 @@ async function memberInfo(req, res) {
     let text = req_body.text;
     // Puts it in the format that database has
     let user = "<@" + req_body.user_id + ">";
-    let rpia_query_url = `https://rpiambulance.com/slack-link.php?token=${websiteVerificationToken}&type=info&slack_id=`;
+    let rpia_query_url = `${baseUrl}?token=${websiteVerificationToken}&type=info&slack_id=`;
     // If they gave us no paramaters just return themselves
     if (text.length == 0) {
         // Encodes the userID of who initialized the command to be sent
